@@ -24,8 +24,8 @@ Spotlight-utils version mgmt
 - check for latest release of spotlight-utils
 - compare to current extracted (location: `/opt/spotlight-utils`)
 - update accordingly
-- **STATUS:** latest released `spotlight-utils` installed
-- execute
+- **STATUS:** latest release of `spotlight-utils` extracted for use
+- execute `process-tools.sh`
 
 ### `process-tools.sh`
 
