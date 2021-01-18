@@ -61,6 +61,18 @@ DD_AGENT_ENABLED=true/false
 DD_AGENT_MAJOR_VERSION=7
 ```
 
+### Default Configurations per Component
+
+See the `OPTIONAL TODO` above. The idea here would be to have a default/global config per component which can be changed gloablly w/o having to update all the individual instances.
+
+The `/config-files/spotlight-utils/datadog/datadog.properties` could then include a simple 
+
+```shell
+DD_AGENT_ENABLED=true/false
+```
+
+and the default configs would take care of the rest.
+
 ## General Installation
 
 - cron job to pull latest `init.sh`, chmod, and execute
