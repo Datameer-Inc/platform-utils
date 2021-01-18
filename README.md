@@ -2,10 +2,11 @@
 
 ```
 init.sh
+process-tools.sh
 tools
   - datadog
      - install.sh
-     - component
+     - component (OPTIONAL TODO: default configs?)
        - emr
          - conf.d
          - datadog.yaml
@@ -14,13 +15,52 @@ tools
          - datadog.yaml
 ```
 
-## EMR
+## Scripts
 
-- bootstrap-action (cronjob to
-  - pull init.sh from `main` and execute with params e.g datadog/emr OR datadog/spotlight
-  - init.sh (spotlight-utils version mgmt)
-    - checks for latest release of tools
-    - compares to currently extracted
-    - updates accordingly
-  - process the paramters (datadog/emr, etc)
-    - install/update datadog (based on changes to datadog.yaml and conf.d)
+### `init.sh`
+
+Spotlight-utils version mgmt
+
+- check for latest release of spotlight-utils
+- compare to current extracted (location: `/opt/spotlight-utils`)
+- update accordingly
+- **STATUS:** latest released `spotlight-utils` installed
+- execute
+
+### `process-tools.sh`
+
+- look in well-known locations (e.g `/config-files/spotlight-utils/datadog`) for possible configs
+- install/update/delete as necessary according to config
+
+### `tools` directory
+
+Installation - CRUD - scripts for the various tools
+
+### `tools/xxxxxxx/component`
+
+n/a at the moment (a decision needs to be made on how to deliver configs)
+
+## Tool Configuration
+
+Example for datadog.
+
+Under `/config-files/spotlight-utils/datadog` I could imagine the following
+
+```
+/config-files/spotlight-utils/datadog
+- datadog.properties
+- datadog.yaml
+- conf.d
+```
+
+Where datadog.properties contains
+
+```shell
+DD_AGENT_ENABLED=true/false
+# and possibly...
+DD_AGENT_MAJOR_VERSION=7
+```
+
+## General Installation
+
+- cron job to pull latest `init.sh`, chmod, and execute
