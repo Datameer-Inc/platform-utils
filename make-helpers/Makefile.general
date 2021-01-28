@@ -1,0 +1,18 @@
+.DEFAULT_GOAL   :=  help
+SHELL           :=  /bin/bash
+MAKEFLAGS += --no-print-directory
+.PHONY: all
+
+
+help: ## Makefile Help Page
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[\/\%a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-19s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+docs: ## Update the README documentation
+	@pre-commit run -a
+
+pre-commit: ## Initialize pre-commit and install the git-hooks
+	@pre-commit install
+
+guard-%: ## Util to check env var (e.g. guard-ENV_VAR)
+
+	@if [[ "${${*}}" == "" ]]; then echo "Environment variable $* not set"; exit 1; fi
