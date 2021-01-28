@@ -1,6 +1,8 @@
+# Platform Utils
+
 ## Structure
 
-```
+```shell
 init.sh
 process-tools.sh
 tools
@@ -14,6 +16,26 @@ tools
          - conf.d
          - datadog.yaml
 ```
+
+## Makefile Targets
+
+<!-- START makefile-doc -->
+```bash
+$ make help
+
+
+Usage:
+  make <target>
+
+Targets:
+  dd-checks            For <TAG> (default: latest), list all config examples found in "/etc/datadog-agent/conf.d"
+  dd-check/%           For <TAG> (default: latest), output the "/etc/datadog-agent/conf.d/<%>.d/conf.yaml.example
+  help                 Makefile Help Page
+  docs                 Update the README documentation
+  pre-commit           Initialize pre-commit and install the git-hooks
+  guard-%              Util to check env var (e.g. guard-ENV_VAR)
+```
+<!-- END makefile-doc -->
 
 ## Scripts
 
@@ -65,7 +87,7 @@ DD_AGENT_MAJOR_VERSION=7
 
 See the `OPTIONAL TODO` above. The idea here would be to have a default/global config per component which can be changed gloablly w/o having to update all the individual instances.
 
-The `/config-files/spotlight-utils/datadog/datadog.properties` could then include a simple 
+The `/config-files/spotlight-utils/datadog/datadog.properties` could then include a simple
 
 ```shell
 DD_AGENT_ENABLED=true/false
