@@ -3,7 +3,7 @@
   roles:
     - { role: datadog.datadog, become: yes }
   vars:
-    datadog_enabled: "{{ lookup('env', 'DD_AGENT_ENABLED') | default('false', true) }}"
+    datadog_enabled: "{{ lookup('env', 'DD_AGENT_ENABLED') | bool }}"
     datadog_agent_version: "{{ lookup('env', 'DD_AGENT_VERSION') | default('7.25.0', true) }}"
     datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
     datadog_config:
