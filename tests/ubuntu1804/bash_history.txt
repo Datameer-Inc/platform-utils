@@ -1,32 +1,67 @@
-    1  id
-    2  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-    3  mkdir -p /tmp/config-files/spotlight-utils/datadog
-    4  vim /tmp/config-files/spotlight-utils/datadog/.env
-    5  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-    6  sudo mkdir -p /home/ec2-user/docker-compose
-    7  touch /home/ec2-user/docker-compose/startup.sh
-    8  sudo touch /home/ec2-user/docker-compose/startup.sh
-    9  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-   10  vim /tmp/config-files/spotlight-utils/datadog/.env
-   11  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-   12  vim /tmp/spotlight-utils/latest/tools/datadog/components/spotlight/dd_playbook.yaml
-   13  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-   14  systemctl status datadog-agent
-   15  vim /tmp/config-files/spotlight-utils/datadog/.env
-   16  systemctl status datadog-agent
-   17  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-   18  systemctl status datadog-agent
-   19  vim /tmp/config-files/spotlight-utils/datadog/.env
-   20  export DD_API_KEY=bla
-   21  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-   22  systemctl status datadog-agent
-   23  export DD_API_KEY=
-   24  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-   25  systemctl status datadog-agent
-   26  export DD_API_KEY=bla
-   27  vim /tmp/config-files/spotlight-utils/datadog/.env
-   28  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-   29  systemctl status datadog-agent
-   30  vim /tmp/config-files/spotlight-utils/datadog/.env
-   31  { export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils; export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts; echo rm -rf /tmp/spotlight-utils; which curl || { apt-get update; apt-get install -y vim.tiny curl; }; curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE}/init.sh" | bash -x; }
-   32  history
+# Vagrant commands
+
+- vagrant up
+- vagrant ssh
+- vagrant halt
+
+# Base files - pretend to be a spotlight instance
+{
+    mkdir -p /tmp/config-files/spotlight-utils/datadog
+    touch /tmp/config-files/spotlight-utils/datadog/.env
+    sudo mkdir -p /home/ec2-user/docker-compose
+    sudo touch /home/ec2-user/docker-compose/startup.sh
+    echo "DD_AGENT_ENABLED=true" > /tmp/config-files/spotlight-utils/datadog/.env
+}
+
+# Some docker images didn't have curl or vim
+{
+    which curl || { apt-get update; apt-get install -y curl; }
+    which vim || { apt-get update; apt-get install -y vim; }
+}
+
+# Some custom branch test stuff
+{
+    export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils
+    export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts
+    echo rm -rf /tmp/spotlight-utils
+}
+
+# Initial install (similar to what a cron job would do)
+{
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+}
+
+# Result: datadog-agent installed but stopped (no DD_AGENT_ENABLED=true)
+{
+    systemctl status datadog-agent
+}
+
+# add DD_AGENT_ENABLED=true to the .env
+{
+    echo "DD_AGENT_ENABLED=true" > /tmp/config-files/spotlight-utils/datadog/.env
+}
+
+# Initial install (similar to what a cron job would do)
+{
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+}
+
+# Result: datadog installed but stopped (DD_AGENT_ENABLED=true, but no DD_API_KEY)
+{
+    systemctl status datadog-agent
+}
+
+# add DD_API_KEY
+{
+    export DD_API_KEY=bla
+}
+
+# Initial install (similar to what a cron job would do)
+{
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+}
+
+# Result: datadog-agent started
+{
+    systemctl status datadog-agent
+}
