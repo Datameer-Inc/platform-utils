@@ -2,19 +2,52 @@
 
 ## Structure
 
+### Scripts
+
 ```shell
 init.sh
 process-tools.sh
 tools
   - datadog
-     - install.sh
-     - component (OPTIONAL TODO: default configs?)
+     - process.sh
+     - component
        - emr
-         - conf.d
-         - datadog.yaml
+         - playbook.yaml
        - spotlight
-         - conf.d
-         - datadog.yaml
+         - playbook.yaml
+  - toolx
+     - process.sh
+     - component
+       - emr
+         - playbook.yaml
+       - spotlight
+         - playbook.yaml
+```
+
+### Local Config
+
+- `.env`
+  - holds env vars used by the playbooks above.
+  - tools process.sh called when this file is found.
+- `playbook.yaml` (OPTIONAL)
+  - custom playbook to use if necessary.
+
+```shell
+tools
+  - datadog
+     - .env
+     - component
+       - emr
+         - playbook.yaml
+       - spotlight
+         - playbook.yaml
+  - toolx
+     - .env
+     - component
+       - emr
+         - playbook.yaml
+       - spotlight
+         - playbook.yaml
 ```
 
 ## Makefile Targets

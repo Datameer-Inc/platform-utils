@@ -32,8 +32,8 @@ if [ -f "${config_file}" ]; then
   # auto detect component if not set
   [ -n "${PLAYBOOK_COMPONENT:-}" ] || component_detection
   # provision
-  default_playbook="${PU_TOOLS_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/dd_playbook.yaml"
-  local_playbook="${PU_LOCAL_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/dd_playbook.yaml"
+  default_playbook="${PU_TOOLS_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/playbook.yaml"
+  local_playbook="${PU_LOCAL_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/playbook.yaml"
   playbook="${default_playbook}"
   [ -f "${local_playbook}" ] && playbook="${local_playbook}" || playbook="${default_playbook}"
   if [ -f "${playbook}" ]; then
