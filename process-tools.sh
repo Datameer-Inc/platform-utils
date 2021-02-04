@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+[[ -z "${DEBUG:-}" ]] || set -x
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]:-}" )" >/dev/null 2>&1 && pwd )"
 source "${script_dir}/scripts/functions.sh"

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+[[ -z "${DEBUG:-}" ]] || set -x
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]:-}" )" >/dev/null 2>&1 && pwd )"
 source "${script_dir}/../../scripts/functions.sh"
@@ -34,6 +35,7 @@ run_playbook() {
     else
       ansible-galaxy install datadog.datadog
     fi
+    info "Running playbook '${playbook}'..."
     ansible-playbook "${playbook}"
   else
     info "Playbook '${playbook}' NOT found. Ignoring..."
@@ -65,19 +67,19 @@ if [ -f "${config_file}" ]; then
   local_envs="${PU_LOCAL_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/${PLAYBOOK_NAME}.sh"
   tools_book="${PU_TOOLS_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/${PLAYBOOK_NAME}.yaml"
   local_book="${PU_LOCAL_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/${PLAYBOOK_NAME}.yaml"
-  # extra sauce?
+
+  info "Checking the extra sauce..."
   if [ -f "${local_envs}" ]; then
     source_envs "${local_envs}"
   elif [ -f "${tools_envs}" ]; then
     source_envs "${tools_envs}"
   fi
-  # run playbook
+  info "Checking for the playbook..."
   if [ -f "${local_book}" ]; then
     run_playbook "${local_book}"
   elif [ -f "${tools_book}" ]; then
     run_playbook "${tools_book}"
   fi
-  # provision
 else
   info "Could not find datadog config '${config_file}'. Ignoring..."
 fi
