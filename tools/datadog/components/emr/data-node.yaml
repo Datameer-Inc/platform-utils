@@ -1,0 +1,24 @@
+- name: Install Datadog Agent on servers in AWS
+  hosts: localhost
+  roles:
+    - { role: datadog.datadog, become: yes }
+  vars:
+    datadog_enabled: "{{ lookup('env', 'DD_AGENT_ENABLED') | bool }}"
+    datadog_agent_version: "{{ lookup('env', 'DD_AGENT_VERSION') | default('7.25.0', true) }}"
+    datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
+    datadog_config:
+      tags:
+        - "cluster_name:{{ lookup('env', 'CLUSTER_NAME') }}"
+      logs_enabled: true
+      process_config:
+        enabled: "true"
+      network_config:
+        enabled: true
+    # Drop-ins for /etc/datadog-agent/conf.d/<check_name>.d/conf.yaml
+    # See make targets for more details
+    datadog_checks:
+      hdfs_datanode:
+        init_config:
+          service: hdfs_datanode
+        instances:
+          - hdfs_datanode_jmx_uri: "{{ lookup('env', 'HDFS_DATANODE_JMX_URI') }}"

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]:-}" )" >/dev/null 2>&1 && pwd )"
-source "${script_dir}/../../functions.sh"
+source "${script_dir}/../../scripts/functions.sh"
 config_file="${PU_LOCAL_ROOT}/datadog/.env"
 
 determine_dd_api_key() {
@@ -20,22 +20,14 @@ determine_dd_api_key() {
   fi
 }
 
-if [ -f "${config_file}" ]; then
-  info "Found datadog config '${config_file}'..."
-  install_ansible
+source_envs() {
   set -a
-  source "${config_file}"
+  source "${1}"
   set +a
-  # disable if no api key
-  determine_dd_api_key
-  [[ -z "${DD_API_KEY:-}" ]] && DD_AGENT_ENABLED="false" || DD_AGENT_ENABLED="true"
-  # auto detect component if not set
-  [ -n "${PLAYBOOK_COMPONENT:-}" ] || component_detection
-  # provision
-  default_playbook="${PU_TOOLS_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/playbook.yaml"
-  local_playbook="${PU_LOCAL_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/playbook.yaml"
-  playbook="${default_playbook}"
-  [ -f "${local_playbook}" ] && playbook="${local_playbook}" || playbook="${default_playbook}"
+}
+
+run_playbook() {
+  local playbook=$1
   if [ -f "${playbook}" ]; then
     if ansible-galaxy role list 2> /dev/null | grep -q datadog.datadog; then
       info "Ansible role datadog.datadog already installed. Doing nothing..."
@@ -46,6 +38,46 @@ if [ -f "${config_file}" ]; then
   else
     info "Playbook '${playbook}' NOT found. Ignoring..."
   fi
+}
+
+if [ -f "${config_file}" ]; then
+  info "Found datadog config '${config_file}'..."
+
+  install_ansible
+
+  source_envs "${config_file}"
+
+  # disable if no api key
+  determine_dd_api_key
+  if [[ -z "${DD_API_KEY:-}" ]]; then
+    info "DD_API_KEY has not been found. Disabling agent."
+    DD_AGENT_ENABLED="false"
+  else
+    info "DD_API_KEY has been found. Enabling agent."
+    DD_AGENT_ENABLED="true"
+  fi
+
+  # auto detect component if not set
+  [ -n "${PLAYBOOK_COMPONENT:-}" ] || component_detection
+
+  # check local overrides
+  tools_envs="${PU_TOOLS_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/${PLAYBOOK_NAME}.sh"
+  local_envs="${PU_LOCAL_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/${PLAYBOOK_NAME}.sh"
+  tools_book="${PU_TOOLS_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/${PLAYBOOK_NAME}.yaml"
+  local_book="${PU_LOCAL_ROOT}/datadog/components/${PLAYBOOK_COMPONENT}/${PLAYBOOK_NAME}.yaml"
+  # extra sauce?
+  if [ -f "${local_envs}" ]; then
+    source_envs "${local_envs}"
+  elif [ -f "${tools_envs}" ]; then
+    source_envs "${tools_envs}"
+  fi
+  # run playbook
+  if [ -f "${local_book}" ]; then
+    run_playbook "${local_book}"
+  elif [ -f "${tools_book}" ]; then
+    run_playbook "${tools_book}"
+  fi
+  # provision
 else
   info "Could not find datadog config '${config_file}'. Ignoring..."
 fi

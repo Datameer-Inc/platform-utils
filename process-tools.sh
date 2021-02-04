@@ -3,7 +3,7 @@
 set -euo pipefail
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]:-}" )" >/dev/null 2>&1 && pwd )"
-source "${script_dir}/functions.sh"
+source "${script_dir}/scripts/functions.sh"
 
 export PU_TOOLS_ROOT="${script_dir}/tools"
 

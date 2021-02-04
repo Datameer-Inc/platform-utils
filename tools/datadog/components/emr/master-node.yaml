@@ -1,0 +1,30 @@
+- name: Install Datadog Agent on EMR Master
+  hosts: localhost
+  roles:
+    - { role: datadog.datadog, become: yes }
+  vars:
+    datadog_enabled: "{{ lookup('env', 'DD_AGENT_ENABLED') | bool }}"
+    datadog_agent_version: "{{ lookup('env', 'DD_AGENT_VERSION') | default('7.25.0', true) }}"
+    datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
+    datadog_config:
+      tags:
+        - "cluster_name:{{ lookup('env', 'DD_CLUSTER_NAME') }}"
+      logs_enabled: true
+      process_config:
+        enabled: "true"
+      network_config:
+        enabled: true
+    # Drop-ins for /etc/datadog-agent/conf.d/<check_name>.d/conf.yaml
+    # Run "make dd-check/<check-name>" for more details
+    datadog_checks:
+      yarn:
+        init_config:
+          service: yarn
+        instances:
+          - resourcemanager_uri: "{{ lookup('env', 'RESOURCEMANAGER_URI') }}"
+            cluster_name: "{{ lookup('env', 'DD_CLUSTER_NAME') }}"
+      hdfs_namenode:
+        init_config:
+          service: hdfs_namenode
+        instances:
+          - hdfs_namenode_jmx_uri: "{{ lookup('env', 'HDFS_NAMENODE_JMX_URI') }}"

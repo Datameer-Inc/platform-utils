@@ -97,23 +97,55 @@ install_ansible() {
   fi
 }
 
+curl_ec2() {
+  local ec2MetaUrl='http://169.254.169.254/latest'
+  [ -n "${TOKEN:-}" ] || TOKEN=$(curl -s -X PUT $ec2MetaUrl -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+  curl -s --connect-timeout 2 -q -f --retry-delay 2 --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" $ec2MetaUrl/$1
+}
+
+init_instance_tags() {
+  if [ -z "${INSTANCE_TAGS:-}" ]; then
+    export INSTANCE_ID=$(curl_ec2 meta-data/instance-id)
+    export AWS_REGION=$(curl_ec2 meta-data/placement/region)
+    export INSTANCE_TAGS="$(aws ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" --region $AWS_REGION)"
+  fi
+}
+
+get_instance_tag() {
+  init_instance_tags
+  echo $INSTANCE_TAGS| jq -r --arg tag $1 -r '.Tags[]|select(.Key == $tag)|.Value'
+}
+
+# get a property value based on its name from a hadoop config xml
+get_hadoop_property() {
+  local key=$1
+  local file=$2
+  xmllint --xpath "/configuration/*[name='$key']/value/text()" $file
+}
+
 #######################################
 # Determine a instance usage
 # e.g. emr, spotlight, etc...
 #######################################
 component_detection() {
+  export PLAYBOOK_COMPONENT PLAYBOOK_NAME
   # https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-fs.html
   if command -v emrfs > /dev/null 2>&1; then
-    info "Determined EMR instance..."
-    export PLAYBOOK_COMPONENT='emr'
+    local node_type
+    node_type=$(get_instance_tag 'aws:elasticmapreduce:instance-group-role')
+    info "Determined EMR instance of node type '$node_type'..."
+    PLAYBOOK_COMPONENT='emr'
+    PLAYBOOK_NAME="${node_type,,}-node"
     return 0
   fi
   # TODO(sboardwell): let us think of a better way to determine spotlight installations
   if [ -f /home/ec2-user/docker-compose/startup.sh ]; then
     info "Determined Spotlight instance..."
-    export PLAYBOOK_COMPONENT='spotlight'
+    PLAYBOOK_COMPONENT='spotlight'
+    PLAYBOOK_NAME='spotlight'
     return 0
   fi
   info "Could not determine instance. Using default..."
-  export PLAYBOOK_COMPONENT='default'
+  PLAYBOOK_COMPONENT='default'
+  PLAYBOOK_NAME='default'
 }

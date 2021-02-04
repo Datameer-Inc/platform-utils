@@ -8,9 +8,12 @@
 {
     mkdir -p /tmp/config-files/spotlight-utils/datadog
     touch /tmp/config-files/spotlight-utils/datadog/.env
+}
+
+# pretend to be a spotlight instance
+{
     sudo mkdir -p /home/ec2-user/docker-compose
     sudo touch /home/ec2-user/docker-compose/startup.sh
-    echo "DD_AGENT_ENABLED=true" > /tmp/config-files/spotlight-utils/datadog/.env
 }
 
 # Some docker images didn't have curl or vim

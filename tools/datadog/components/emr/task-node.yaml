@@ -8,9 +8,9 @@
     datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
     datadog_config:
       tags:
-        - "ddenabled:true"
-        - "env:dev-steve"
-      logs_enabled: true
+        - "cluster_name:{{ lookup('env', 'DD_CLUSTER_NAME') }}"
+        - "cluster_node_type:{{ lookup('env', 'DD_CLUSTER_NODE_TYPE') }}"
+      logs_enabled: false
       process_config:
         enabled: "true"
       network_config:
@@ -18,18 +18,3 @@
     # Drop-ins for /etc/datadog-agent/conf.d/<check_name>.d/conf.yaml
     # See make targets for more details
     datadog_checks:
-      disk:
-        init_config:
-        instances:
-          - use_mount: false
-            excluded_filesystems:
-              - tmpfs
-              - shm
-            excluded_mountpoint_re: '/var/lib/docker/(devicemapper|overlay).*'
-      docker:
-        init_config:
-        instances:
-          collect_events: true
-          collect_container_size: true
-          collect_images_stats: true
-          collect_image_size: true
