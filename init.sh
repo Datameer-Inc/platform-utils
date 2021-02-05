@@ -22,14 +22,16 @@ function get_latest_release() {
     die "Problem getting ${latest_url}"
   fi
   if [[ $latest_release_url =~ releases/tag ]]; then
-    release="${latest_release_url//*\//}"
+    latest_release="${latest_release_url//*\//}"
   else
-    release='master'
+    latest_release='master'
   fi
 }
 
 function download_and_extract() {
-  release=${CUSTOM_RELEASE:-$(get_latest_release)}
+  get_latest_release
+  release=${CUSTOM_RELEASE:-$latest_release}
+  [ -n $release ] || die "Couldn't find platform-utils release."
   download_file="${release}.tar.gz"
   download_url="${repo_url}/archive/${download_file}"
   install_path="${root_dir}/platform-utils/${release}"
