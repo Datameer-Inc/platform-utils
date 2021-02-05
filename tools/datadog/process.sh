@@ -16,7 +16,7 @@ determine_dd_api_key() {
       # try in default region
       [[ "${AWS_DEFAULT_REGION}" == 'us-east-1' ]] || DD_API_KEY=$(aws ssm --region=$AWS_DEFAULT_REGION get-parameter --with-decryption --output text --name '/spotlight/shared-resources/datadog_api_key' --query 'Parameter.Value' 2> /dev/null || true)
       # try in us-east-1 if empty
-      [ -n "${DD_API_KEY:-}" ] || DD_API_KEY==$(aws ssm --region=us-east-1 get-parameter --with-decryption --output text --name '/spotlight/shared-resources/datadog_api_key' --query 'Parameter.Value' 2> /dev/null || true)
+      [ -n "${DD_API_KEY:-}" ] || DD_API_KEY=$(aws ssm --region=us-east-1 get-parameter --with-decryption --output text --name '/spotlight/shared-resources/datadog_api_key' --query 'Parameter.Value' 2> /dev/null || true)
     fi
   fi
 }
@@ -49,14 +49,18 @@ if [ -f "${config_file}" ]; then
 
   source_envs "${config_file}"
 
-  # disable if no api key
-  determine_dd_api_key
-  if [[ -z "${DD_API_KEY:-}" ]]; then
-    info "DD_API_KEY has not been found. Disabling agent."
+  if [[ "${DD_AGENT_ENABLED:-}" != "true" ]]; then
+    info "DD_AGENT_ENABLED=true not detected (neither as env or in config file). Disabling agent."
     DD_AGENT_ENABLED="false"
   else
-    info "DD_API_KEY has been found. Enabling agent."
-    DD_AGENT_ENABLED="true"
+    determine_dd_api_key
+    if [[ -z "${DD_API_KEY:-}" ]]; then
+      info "DD_API_KEY has not been found. Disabling agent."
+      DD_AGENT_ENABLED="false"
+    else
+      info "DD_API_KEY has been found. Enabling agent."
+      DD_AGENT_ENABLED="true"
+    fi
   fi
 
   # auto detect component if not set
