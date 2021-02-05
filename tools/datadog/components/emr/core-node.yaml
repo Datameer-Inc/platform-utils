@@ -8,7 +8,7 @@
     datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
     datadog_config:
       tags:
-        - "cluster_name:{{ lookup('env', 'CLUSTER_NAME') }}"
+        - "cluster_name:{{ lookup('env', 'DD_CLUSTER_NAME') }}"
       logs_enabled: true
       process_config:
         enabled: "true"
