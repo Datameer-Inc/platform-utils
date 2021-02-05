@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-repo_url='https://github.com/Datameer-Inc/spotlight-utils'
+repo_url='https://github.com/Datameer-Inc/platform-utils'
 latest_url="${repo_url}/releases/latest"
 root_dir="${PU_BASE_INSTALL_DIR:-/tmp}"
 
@@ -32,8 +32,8 @@ function download_and_extract() {
   release=${CUSTOM_RELEASE:-$(get_latest_release)}
   download_file="${release}.tar.gz"
   download_url="${repo_url}/archive/${download_file}"
-  install_path="${root_dir}/spotlight-utils/${release}"
-  latest_path="${root_dir}/spotlight-utils/latest"
+  install_path="${root_dir}/platform-utils/${release}"
+  latest_path="${root_dir}/platform-utils/latest"
   if [ -d "${install_path}" ]; then
     info "Install path already exists. No need to install..."
   elif [ -e "${install_path}" ]; then

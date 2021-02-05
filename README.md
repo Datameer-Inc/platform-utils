@@ -76,15 +76,15 @@ Targets:
 
 Spotlight-utils version mgmt
 
-- check for latest release of spotlight-utils
-- compare to current extracted (location: `/opt/spotlight-utils`)
+- check for latest release of platform-utils
+- compare to current extracted (location: `/opt/platform-utils`)
 - update accordingly
-- **STATUS:** latest release of `spotlight-utils` extracted for use
+- **STATUS:** latest release of `platform-utils` extracted for use
 - execute `process-tools.sh`
 
 ### `process-tools.sh`
 
-- look in well-known locations (e.g `/config-files/spotlight-utils/datadog`) for possible configs
+- look in well-known locations (e.g `/config-files/platform-utils/datadog`) for possible configs
 - install/update/delete as necessary according to config
 
 ### `tools` directory
@@ -99,10 +99,10 @@ n/a at the moment (a decision needs to be made on how to deliver configs)
 
 Example for datadog.
 
-Under `/config-files/spotlight-utils/datadog` I could imagine the following
+Under `/config-files/platform-utils/datadog` I could imagine the following
 
 ```
-/config-files/spotlight-utils/datadog
+/config-files/platform-utils/datadog
 - datadog.properties
 - datadog.yaml
 - conf.d
@@ -120,7 +120,7 @@ DD_AGENT_MAJOR_VERSION=7
 
 See the `OPTIONAL TODO` above. The idea here would be to have a default/global config per component which can be changed gloablly w/o having to update all the individual instances.
 
-The `/config-files/spotlight-utils/datadog/datadog.properties` could then include a simple
+The `/config-files/platform-utils/datadog/datadog.properties` could then include a simple
 
 ```shell
 DD_AGENT_ENABLED=true/false

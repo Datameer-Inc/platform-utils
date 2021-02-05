@@ -6,8 +6,8 @@
 
 # Base files - pretend to be a spotlight instance
 {
-    mkdir -p /tmp/config-files/spotlight-utils/datadog
-    touch /tmp/config-files/spotlight-utils/datadog/.env
+    mkdir -p /tmp/config-files/platform-utils/datadog
+    touch /tmp/config-files/platform-utils/datadog/.env
 }
 
 # pretend to be a spotlight instance
@@ -24,14 +24,14 @@
 
 # Some custom branch test stuff
 {
-    export PU_LOCAL_ROOT=/tmp/config-files/spotlight-utils
+    export PU_LOCAL_ROOT=/tmp/config-files/platform-utils
     export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts
-    echo rm -rf /tmp/spotlight-utils
+    echo rm -rf /tmp/platform-utils
 }
 
 # Initial install (similar to what a cron job would do)
 {
-    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/platform-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
 }
 
 # Result: datadog-agent installed but stopped (no DD_AGENT_ENABLED=true)
@@ -41,12 +41,14 @@
 
 # add DD_AGENT_ENABLED=true to the .env
 {
-    echo "DD_AGENT_ENABLED=true" > /tmp/config-files/spotlight-utils/datadog/.env
+    mkdir -p /tmp/config-files/platform-utils/datadog
+    echo "DD_AGENT_ENABLED=true" > /tmp/config-files/platform-utils/datadog/.env
+    echo "DD_API_KEY=............" >> /tmp/config-files/platform-utils/datadog/.env
 }
 
 # Initial install (similar to what a cron job would do)
 {
-    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/platform-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
 }
 
 # Result: datadog installed but stopped (DD_AGENT_ENABLED=true, but no DD_API_KEY)
@@ -61,7 +63,7 @@
 
 # Initial install (similar to what a cron job would do)
 {
-    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/spotlight-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/platform-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
 }
 
 # Result: datadog-agent started
