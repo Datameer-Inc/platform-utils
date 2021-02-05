@@ -123,6 +123,37 @@ get_hadoop_property() {
   xmllint --xpath "/configuration/*[name='$key']/value/text()" $file
 }
 
+
+#######################################
+# NOTE: Applies to EMR nodes only.
+# If PU_LOCAL_ROOT is not found, then
+# check the S3 bucket and download to
+# a temporary location
+#######################################
+pu_local_root_check() {
+  if [ -d "${PU_LOCAL_ROOT}" ]; then
+    info "Found local config dir '${PU_LOCAL_ROOT}'."
+  else
+    local cluster_id bucket_name new_pu_local_root s3_uri
+    info "Missing local config dir '${PU_LOCAL_ROOT}'. Checking S3 bucket if possible..."
+    init_instance_tags
+    cluster_id=$(get_instance_tag 'aws:elasticmapreduce:job-flow-id')
+    if [ -n "${cluster_id}" ]; then
+      bucket_name=$(aws emr describe-cluster --cluster-id $cluster_id --region $AWS_REGION \
+        --query "Cluster.LogUri" --output text | cut -d '/' -f 3)
+      if [ -n "${bucket_name}" ]; then
+        s3_uri="s3://$bucket_name/${PU_LOCAL_ROOT#/}"
+        if aws s3 ls $s3_uri --region $AWS_REGION &> /dev/null; then
+          new_pu_local_root="/tmp/${PU_LOCAL_ROOT#/}"
+          mkdir -p "${PU_LOCAL_ROOT}"
+          aws s3 sync --delete $s3_uri $PU_LOCAL_ROOT
+          PU_LOCAL_ROOT=$new_pu_local_root
+        fi
+      fi
+    fi
+  fi
+}
+
 #######################################
 # Determine a instance usage
 # e.g. emr, spotlight, etc...

@@ -5,7 +5,6 @@ set -euo pipefail
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]:-}" )" >/dev/null 2>&1 && pwd )"
 source "${script_dir}/../../scripts/functions.sh"
-config_file="${PU_LOCAL_ROOT}/datadog/.env"
 
 determine_dd_api_key() {
   export DD_API_KEY DD_AGENT_ENABLED
@@ -41,6 +40,9 @@ run_playbook() {
     info "Playbook '${playbook}' NOT found. Ignoring..."
   fi
 }
+
+pu_local_root_check
+config_file="${PU_LOCAL_ROOT}/datadog/.env"
 
 if [ -f "${config_file}" ]; then
   info "Found datadog config '${config_file}'..."
