@@ -139,15 +139,20 @@ pu_local_root_check() {
     init_instance_tags
     cluster_id=$(get_instance_tag 'aws:elasticmapreduce:job-flow-id')
     if [ -n "${cluster_id}" ]; then
+      info "Found cluster '$cluster_id'..."
       bucket_name=$(aws emr describe-cluster --cluster-id $cluster_id --region $AWS_REGION \
         --query "Cluster.LogUri" --output text | cut -d '/' -f 3)
       if [ -n "${bucket_name}" ]; then
+        info "Found bucket '$bucket_name'..."
         s3_uri="s3://$bucket_name/${PU_LOCAL_ROOT#/}"
         if aws s3 ls $s3_uri --region $AWS_REGION &> /dev/null; then
+          info "Found config at '$s3_uri'..."
           new_pu_local_root="/tmp/${PU_LOCAL_ROOT#/}"
           mkdir -p "${PU_LOCAL_ROOT}"
           aws s3 sync --delete $s3_uri $PU_LOCAL_ROOT
           PU_LOCAL_ROOT=$new_pu_local_root
+        else
+          info "No config at '$s3_uri'..."
         fi
       fi
     fi
