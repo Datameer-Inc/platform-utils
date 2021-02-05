@@ -8,14 +8,18 @@
     datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
     datadog_config:
       tags:
-        - "service:{{ lookup('env', 'STACK_NAME') }}"
-        - "env:dev"
-        - "version:{{ lookup('env', 'NEEBO_VERSION') }}"
+        - "service:{{ lookup('env', 'DD_GLOBAL_SERVICE') }}"
+        - "env:{{ lookup('env', 'DD_GLOBAL_ENV') }}"
+        - "version:{{ lookup('env', 'DD_GLOBAL_VERSION') }}"
       listeners:
         - name: docker
       config_providers:
         - name: docker
           polling: true
+      docker_labels_as_tags:
+        DD_CONTAINER_ENV: 'env'
+        DD_CONTAINER_SERVICE: 'service'
+        DD_CONTAINER_VERSION: 'version'
       logs_config:
         container_collect_all: true
         processing_rules:
@@ -27,6 +31,7 @@
         enabled: "true"
       network_config:
         enabled: true
+    datadog_additional_groups: 'docker'
     # Drop-ins for /etc/datadog-agent/conf.d/<check_name>.d/conf.yaml
     # See make targets for more details
     datadog_checks:
@@ -41,10 +46,12 @@
       docker:
         init_config:
         instances:
-          collect_events: true
-          collect_container_size: true
-          collect_images_stats: true
-          collect_image_size: true
+          - url: "unix://var/run/docker.sock"
+            collect_events: true
+            collect_container_size: true
+            collect_images_stats: true
+            collect_image_size: true
+
     # waiting on https://datameer.atlassian.net/browse/EUR-6130
     #   spark:
     #     init_config:
