@@ -145,7 +145,7 @@ component_detection() {
     PLAYBOOK_NAME='spotlight'
     return 0
   fi
-  info "Could not determine instance. Using default..."
-  PLAYBOOK_COMPONENT='default'
-  PLAYBOOK_NAME='default'
+  info "Could not determine instance. Using 'basic'..."
+  PLAYBOOK_COMPONENT='basic'
+  PLAYBOOK_NAME='basic'
 }
