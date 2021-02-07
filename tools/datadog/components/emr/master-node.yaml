@@ -7,8 +7,9 @@
     datadog_agent_version: "{{ lookup('env', 'DD_AGENT_VERSION') | default('7.25.0', true) }}"
     datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
     datadog_config:
-      tags:
-        - "cluster_name:{{ lookup('env', 'DD_CLUSTER_NAME') }}"
+      # tags:
+      #   - "cluster_name:{{ lookup('env', 'DD_CLUSTER_NAME') }}"
+      #   - "jobflowid:{{ lookup('env', 'CLUSTER_ID') }}"
       logs_enabled: true
       process_config:
         enabled: "true"
