@@ -1,8 +1,23 @@
 # Platform Utils
 
-## Structure
+## General Installation
 
-### Scripts
+One shot install:
+
+```shell
+curl -fsSL -H "Cache-Control: no-cache" "https://raw.githubusercontent.com/Datameer-Inc/platform-utils/master/init.sh" | bash
+```
+
+This can also be placed in a cron job to pull latest `init.sh`, chmod, and execute
+
+## Util Scripts
+
+The general scripts contain scripts to
+
+- install ansible
+- configuration playbooks for various components
+
+Example structure (NOTE: may not be completely up to date)
 
 ```shell
 init.sh
@@ -11,44 +26,42 @@ tools
   - datadog
      - process.sh
      - component
+       - basic
+         - basic.sh
+         - basic.yaml
        - emr
-         - playbook.yaml
+         - master-node.sh
+         - master-node.yaml
+         - core-node.sh
+         - core-node.yaml
+         - task-node.sh
+         - task-node.yaml
        - spotlight
-         - playbook.yaml
-  - toolx
+         - spotlight.sh
+         - spotlight.yaml
+  - toolX
      - process.sh
      - component
-       - emr
-         - playbook.yaml
-       - spotlight
-         - playbook.yaml
+       - compX
+         - compX.sh
+         - compX.yaml
+       - ...
+       - ...
 ```
 
-### Local Config
+## Local Config
 
-- `.env`
+The configuration files local to the instance
+
+e.g.
+
+- `/config-files/platform-utils/datadog/.env`
   - holds env vars used by the playbooks above.
   - tools process.sh called when this file is found.
-- `playbook.yaml` (OPTIONAL)
-  - custom playbook to use if necessary.
+- `/config-files/platform-utils/datadog/components/emr/master-node.sh` (OPTIONAL)
 
-```shell
-tools
-  - datadog
-     - .env
-     - component
-       - emr
-         - playbook.yaml
-       - spotlight
-         - playbook.yaml
-  - toolx
-     - .env
-     - component
-       - emr
-         - playbook.yaml
-       - spotlight
-         - playbook.yaml
-```
+  `/config-files/platform-utils/datadog/components/emr/master-node.yaml` (OPTIONAL)
+  - custom playbook to use if necessary.
 
 ## Makefile Targets
 
@@ -70,7 +83,7 @@ Targets:
 ```
 <!-- END makefile-doc -->
 
-## Scripts
+## Util Scripts in Details
 
 ### `init.sh`
 
@@ -89,45 +102,38 @@ Spotlight-utils version mgmt
 
 ### `tools` directory
 
-Installation - CRUD - scripts for the various tools
+Installation/management scripts for the various tools.
 
 ### `tools/xxxxxxx/component`
 
-n/a at the moment (a decision needs to be made on how to deliver configs)
+Components created based on the type and use of instance. A `basic` profile is provided along with some specialised component profiles.
 
 ## Tool Configuration
 
-Example for datadog.
-
-Under `/config-files/platform-utils/datadog` I could imagine the following
-
-```
-/config-files/platform-utils/datadog
-- datadog.properties
-- datadog.yaml
-- conf.d
-```
-
-Where datadog.properties contains
+In order to activate a tool, a `.env` file needs to be added with the appropriate environment variable, e.g.
 
 ```shell
-DD_AGENT_ENABLED=true/false
-# and possibly...
-DD_AGENT_MAJOR_VERSION=7
+$ cat /config-files/platform-utils/datadog/.env
+
+DD_AGENT_ENABLED=true
 ```
 
-### Default Configurations per Component
-
-See the `OPTIONAL TODO` above. The idea here would be to have a default/global config per component which can be changed gloablly w/o having to update all the individual instances.
-
-The `/config-files/platform-utils/datadog/datadog.properties` could then include a simple
+To use a custom ansible configuration, simply place an equivalent file in the same relative path, e.g.
 
 ```shell
-DD_AGENT_ENABLED=true/false
+/config-files/platform-utils/datadog/.env
+/config-files/platform-utils/datadog/component/emr/master-node.sh
+/config-files/platform-utils/datadog/component/emr/master-node.yaml
 ```
 
-and the default configs would take care of the rest.
+## Testing
 
-## General Installation
+Automated testing to be defined and implemented.
 
-- cron job to pull latest `init.sh`, chmod, and execute
+You can find Vagrant file with a list of commands used to test configurations.
+
+General steps:
+
+- `vagrant up`
+- `vagrant ssh`
+- Use the commands to run and test the scripts in an isolated environment.
