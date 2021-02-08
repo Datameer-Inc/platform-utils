@@ -29,3 +29,31 @@
           service: hdfs_namenode
         instances:
           - hdfs_namenode_jmx_uri: "{{ lookup('env', 'HDFS_NAMENODE_JMX_URI') }}"
+- name: Add the HADOOP_NAMENODE_OPTS for the hdfs integration
+  hosts: localhost
+  vars:
+    hadoop_env_sh: /etc/hadoop/conf.empty/hadoop-env.sh
+    export_line: export HADOOP_NAMENODE_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=50070 $HADOOP_NAMENODE_OPTS"
+  tasks:
+    - name: Check for current HADOOP_NAMENODE_OPTS
+      become: yes
+      lineinfile:
+        path: "{{ hadoop_env_sh }}"
+        line: "{{ export_line }}"
+        state: present
+      check_mode: yes
+      register: present
+    - name: Replace HADOOP_NAMENODE_OPTS if needed
+      become: yes
+      lineinfile:
+        path: "{{ hadoop_env_sh }}"
+        regex: '^export HADOOP_NAMENODE_OPTS=.*'
+        line: "{{ export_line }}"
+        state: present
+      when: present.changed
+    - name: Restart hadoop-hdfs-namenode if anything changed
+      become: yes
+      ansible.builtin.service:
+        name: hadoop-hdfs-namenode
+        state: restarted
+      when: present.changed
