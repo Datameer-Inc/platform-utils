@@ -39,10 +39,10 @@
         init_config:
         instances:
           - use_mount: false
-            excluded_filesystems:
+            file_system_exclude:
               - tmpfs
               - shm
-            excluded_mountpoint_re: '/var/lib/docker/(devicemapper|overlay).*'
+            mount_point_exclude: '/var/lib/docker/(devicemapper|overlay).*'
       docker:
         init_config:
         instances:
