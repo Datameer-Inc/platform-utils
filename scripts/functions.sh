@@ -148,8 +148,8 @@ pu_local_root_check() {
         if aws s3 ls $s3_uri --region $AWS_REGION &> /dev/null; then
           info "Found config at '$s3_uri'..."
           new_pu_local_root="/tmp/${PU_LOCAL_ROOT#/}"
-          mkdir -p "${PU_LOCAL_ROOT}"
-          aws s3 sync --delete $s3_uri $PU_LOCAL_ROOT
+          mkdir -p "${new_pu_local_root}"
+          aws s3 sync --delete $s3_uri $new_pu_local_root
           PU_LOCAL_ROOT=$new_pu_local_root
         else
           info "No config at '$s3_uri'..."
