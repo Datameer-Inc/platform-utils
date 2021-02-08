@@ -23,7 +23,7 @@
           service: yarn
         instances:
           - resourcemanager_uri: "{{ lookup('env', 'RESOURCEMANAGER_URI') }}"
-            cluster_name: "{{ lookup('env', 'DD_CLUSTER_NAME') }}"
+            cluster_name: "{{ lookup('env', 'CLUSTER_NAME') }}"
       hdfs_namenode:
         init_config:
           service: hdfs_namenode
