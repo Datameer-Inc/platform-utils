@@ -99,7 +99,7 @@ install_ansible() {
 
 curl_ec2() {
   local ec2MetaUrl='http://169.254.169.254/latest'
-  [ -n "${TOKEN:-}" ] || TOKEN=$(curl -s -X PUT $ec2MetaUrl -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+  [ -n "${TOKEN:-}" ] || TOKEN=$(curl -s -X PUT "${ec2MetaUrl}/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
   curl -s --connect-timeout 2 -q -f --retry-delay 2 --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" $ec2MetaUrl/$1
 }
 
