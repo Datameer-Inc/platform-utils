@@ -75,7 +75,7 @@ Usage:
 
 Targets:
   dd-checks            For <TAG> (default: latest), list all config examples found in "/etc/datadog-agent/conf.d"
-  dd-check/%           For <TAG> (default: latest), output the "/etc/datadog-agent/conf.d/<%>.d/conf.yaml.example
+  dd-check/%           For <TAG> (default: latest), output the "/etc/datadog-agent/conf.d/<%>.d/conf.yaml.example"
   help                 Makefile Help Page
   docs                 Update the README documentation
   pre-commit           Initialize pre-commit and install the git-hooks
