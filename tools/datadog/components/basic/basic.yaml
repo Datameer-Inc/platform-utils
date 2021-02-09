@@ -15,4 +15,4 @@
         enabled: "false"
     # Drop-ins for /etc/datadog-agent/conf.d/<check_name>.d/conf.yaml
     # See make targets for more details
-    datadog_checks:
+    datadog_checks: {}
