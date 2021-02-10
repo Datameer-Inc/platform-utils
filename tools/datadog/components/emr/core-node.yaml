@@ -1,0 +1,53 @@
+- name: Install Datadog Agent on servers in AWS
+  hosts: localhost
+  roles:
+    - { role: datadog.datadog, become: yes }
+  vars:
+    datadog_enabled: "{{ lookup('env', 'DD_AGENT_ENABLED') | bool }}"
+    datadog_agent_version: "{{ lookup('env', 'DD_AGENT_VERSION') | default('7.25.0', true) }}"
+    datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
+    datadog_config:
+      # tags:
+      #   - "cluster_name:{{ lookup('env', 'CLUSTER_NAME') }}"
+      #   - "jobflowid:{{ lookup('env', 'CLUSTER_ID') }}"
+      logs_enabled: true
+      process_config:
+        enabled: "true"
+      network_config:
+        enabled: true
+    # Drop-ins for /etc/datadog-agent/conf.d/<check_name>.d/conf.yaml
+    # See make targets for more details
+    datadog_checks:
+      hdfs_datanode:
+        init_config:
+          service: hdfs_datanode
+        instances:
+          - hdfs_datanode_jmx_uri: "{{ lookup('env', 'HDFS_DATANODE_JMX_URI') }}"
+- name: Add the HADOOP_DATANODE_OPTS for the hdfs integration
+  hosts: localhost
+  vars:
+    hadoop_env_sh: /etc/hadoop/conf.empty/hadoop-env.sh
+    export_line: export HADOOP_DATANODE_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=50075 $HADOOP_DATANODE_OPTS"
+  tasks:
+    - name: Check for current HADOOP_DATANODE_OPTS
+      become: yes
+      lineinfile:
+        path: "{{ hadoop_env_sh }}"
+        line: "{{ export_line }}"
+        state: present
+      check_mode: yes
+      register: present
+    - name: Replace HADOOP_DATANODE_OPTS if needed
+      become: yes
+      lineinfile:
+        path: "{{ hadoop_env_sh }}"
+        regex: '^export HADOOP_DATANODE_OPTS=.*'
+        line: "{{ export_line }}"
+        state: present
+      when: present.changed
+    - name: Restart hadoop-hdfs-datanode if anything changed
+      become: yes
+      ansible.builtin.service:
+        name: hadoop-hdfs-datanode
+        state: restarted
+      when: present.changed

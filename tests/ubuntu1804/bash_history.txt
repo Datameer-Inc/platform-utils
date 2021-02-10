@@ -1,0 +1,72 @@
+# Vagrant commands
+
+- vagrant up
+- vagrant ssh
+- vagrant halt
+
+# Base files - pretend to be a spotlight instance
+{
+    mkdir -p /tmp/config-files/platform-utils/datadog
+    touch /tmp/config-files/platform-utils/datadog/.env
+}
+
+# pretend to be a spotlight instance
+{
+    sudo mkdir -p /home/ec2-user/docker-compose
+    sudo touch /home/ec2-user/docker-compose/startup.sh
+}
+
+# Some docker images didn't have curl or vim
+{
+    which curl || { apt-get update; apt-get install -y curl; }
+    which vim || { apt-get update; apt-get install -y vim; }
+}
+
+# Some custom branch test stuff
+{
+    export PU_LOCAL_ROOT=/tmp/config-files/platform-utils
+    export CUSTOM_RELEASE=DEVOP-995_add-mgmt-scripts
+    echo rm -rf /tmp/platform-utils
+}
+
+# Initial install (similar to what a cron job would do)
+{
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/platform-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+}
+
+# Result: datadog-agent installed but stopped (no DD_AGENT_ENABLED=true)
+{
+    systemctl status datadog-agent
+}
+
+# add DD_AGENT_ENABLED=true to the .env
+{
+    mkdir -p /tmp/config-files/platform-utils/datadog
+    echo "DD_AGENT_ENABLED=true" > /tmp/config-files/platform-utils/datadog/.env
+    echo "DD_API_KEY=............" >> /tmp/config-files/platform-utils/datadog/.env
+}
+
+# Initial install (similar to what a cron job would do)
+{
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/platform-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+}
+
+# Result: datadog installed but stopped (DD_AGENT_ENABLED=true, but no DD_API_KEY)
+{
+    systemctl status datadog-agent
+}
+
+# add DD_API_KEY
+{
+    export DD_API_KEY=bla
+}
+
+# Initial install (similar to what a cron job would do)
+{
+    curl -fsSL "https://raw.githubusercontent.com/Datameer-Inc/platform-utils/${CUSTOM_RELEASE:-master}/init.sh" | bash
+}
+
+# Result: datadog-agent started
+{
+    systemctl status datadog-agent
+}

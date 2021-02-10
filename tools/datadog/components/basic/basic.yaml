@@ -1,0 +1,18 @@
+- name: Install Datadog Agent on servers in AWS
+  hosts: localhost
+  roles:
+    - { role: datadog.datadog, become: yes }
+  vars:
+    datadog_enabled: "{{ lookup('env', 'DD_AGENT_ENABLED') | bool }}"
+    datadog_agent_version: "{{ lookup('env', 'DD_AGENT_VERSION') | default('7.25.0', true) }}"
+    datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
+    datadog_config:
+      tags: {}
+      logs_enabled: "false"
+      process_config:
+        enabled: "false"
+      network_config:
+        enabled: "false"
+    # Drop-ins for /etc/datadog-agent/conf.d/<check_name>.d/conf.yaml
+    # See make targets for more details
+    datadog_checks: {}

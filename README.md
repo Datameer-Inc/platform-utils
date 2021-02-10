@@ -1,78 +1,139 @@
-## Structure
+# Platform Utils
 
+## General Installation
+
+One shot install:
+
+```shell
+curl -fsSL -H "Cache-Control: no-cache" "https://raw.githubusercontent.com/Datameer-Inc/platform-utils/master/init.sh" | bash
 ```
+
+This can also be placed in a cron job to pull latest `init.sh`, chmod, and execute
+
+## Util Scripts
+
+The general scripts contain scripts to
+
+- install ansible
+- configuration playbooks for various components
+
+Example structure (NOTE: may not be completely up to date)
+
+```shell
 init.sh
 process-tools.sh
 tools
   - datadog
-     - install.sh
-     - component (OPTIONAL TODO: default configs?)
+     - process.sh
+     - component
+       - basic
+         - basic.sh
+         - basic.yaml
        - emr
-         - conf.d
-         - datadog.yaml
+         - master-node.sh
+         - master-node.yaml
+         - core-node.sh
+         - core-node.yaml
+         - task-node.sh
+         - task-node.yaml
        - spotlight
-         - conf.d
-         - datadog.yaml
+         - spotlight.sh
+         - spotlight.yaml
+  - toolX
+     - process.sh
+     - component
+       - compX
+         - compX.sh
+         - compX.yaml
+       - ...
+       - ...
 ```
 
-## Scripts
+## Local Config
+
+The configuration files local to the instance
+
+e.g.
+
+- `/config-files/platform-utils/datadog/.env`
+  - holds env vars used by the playbooks above.
+  - tools process.sh called when this file is found.
+- `/config-files/platform-utils/datadog/components/emr/master-node.sh` (OPTIONAL)
+
+  `/config-files/platform-utils/datadog/components/emr/master-node.yaml` (OPTIONAL)
+  - custom playbook to use if necessary.
+
+## Makefile Targets
+
+<!-- START makefile-doc -->
+```bash
+$ make help
+
+
+Usage:
+  make <target>
+
+Targets:
+  dd-checks            For <TAG> (default: latest), list all config examples found in "/etc/datadog-agent/conf.d"
+  dd-check/%           For <TAG> (default: latest), output the "/etc/datadog-agent/conf.d/<%>.d/conf.yaml.example"
+  help                 Makefile Help Page
+  docs                 Update the README documentation
+  pre-commit           Initialize pre-commit and install the git-hooks
+  guard-%              Util to check env var (e.g. guard-ENV_VAR)
+```
+<!-- END makefile-doc -->
+
+## Util Scripts in Details
 
 ### `init.sh`
 
 Spotlight-utils version mgmt
 
-- check for latest release of spotlight-utils
-- compare to current extracted (location: `/opt/spotlight-utils`)
+- check for latest release of platform-utils
+- compare to current extracted (location: `/opt/platform-utils`)
 - update accordingly
-- **STATUS:** latest release of `spotlight-utils` extracted for use
+- **STATUS:** latest release of `platform-utils` extracted for use
 - execute `process-tools.sh`
 
 ### `process-tools.sh`
 
-- look in well-known locations (e.g `/config-files/spotlight-utils/datadog`) for possible configs
+- look in well-known locations (e.g `/config-files/platform-utils/datadog`) for possible configs
 - install/update/delete as necessary according to config
 
 ### `tools` directory
 
-Installation - CRUD - scripts for the various tools
+Installation/management scripts for the various tools.
 
 ### `tools/xxxxxxx/component`
 
-n/a at the moment (a decision needs to be made on how to deliver configs)
+Components created based on the type and use of instance. A `basic` profile is provided along with some specialised component profiles.
 
 ## Tool Configuration
 
-Example for datadog.
-
-Under `/config-files/spotlight-utils/datadog` I could imagine the following
-
-```
-/config-files/spotlight-utils/datadog
-- datadog.properties
-- datadog.yaml
-- conf.d
-```
-
-Where datadog.properties contains
+In order to activate a tool, a `.env` file needs to be added with the appropriate environment variable, e.g.
 
 ```shell
-DD_AGENT_ENABLED=true/false
-# and possibly...
-DD_AGENT_MAJOR_VERSION=7
+$ cat /config-files/platform-utils/datadog/.env
+
+DD_AGENT_ENABLED=true
 ```
 
-### Default Configurations per Component
-
-See the `OPTIONAL TODO` above. The idea here would be to have a default/global config per component which can be changed gloablly w/o having to update all the individual instances.
-
-The `/config-files/spotlight-utils/datadog/datadog.properties` could then include a simple 
+To use a custom ansible configuration, simply place an equivalent file in the same relative path, e.g.
 
 ```shell
-DD_AGENT_ENABLED=true/false
+/config-files/platform-utils/datadog/.env
+/config-files/platform-utils/datadog/component/emr/master-node.sh
+/config-files/platform-utils/datadog/component/emr/master-node.yaml
 ```
 
-and the default configs would take care of the rest.
+## Testing
 
-## General Installation
+Automated testing to be defined and implemented.
 
-- cron job to pull latest `init.sh`, chmod, and execute
+You can find Vagrant file with a list of commands used to test configurations.
+
+General steps:
+
+- `vagrant up`
+- `vagrant ssh`
+- Use the commands to run and test the scripts in an isolated environment.

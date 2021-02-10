@@ -1,0 +1,66 @@
+- name: Install Datadog Agent on servers in AWS
+  hosts: localhost
+  roles:
+    - { role: datadog.datadog, become: yes }
+  vars:
+    datadog_enabled: "{{ lookup('env', 'DD_AGENT_ENABLED') | bool }}"
+    datadog_agent_version: "{{ lookup('env', 'DD_AGENT_VERSION') | default('7.25.0', true) }}"
+    datadog_api_key: "{{ lookup('env', 'DD_API_KEY') }}"
+    datadog_config:
+      tags:
+        - "service:{{ lookup('env', 'DD_GLOBAL_SERVICE') }}"
+        - "env:{{ lookup('env', 'DD_GLOBAL_ENV') }}"
+        - "version:{{ lookup('env', 'DD_GLOBAL_VERSION') }}"
+      listeners:
+        - name: docker
+      config_providers:
+        - name: docker
+          polling: true
+      docker_labels_as_tags:
+        DD_CONTAINER_ENV: 'env'
+        DD_CONTAINER_SERVICE: 'service'
+        DD_CONTAINER_VERSION: 'version'
+      logs_config:
+        container_collect_all: true
+        processing_rules:
+          - type: multi_line
+            name: log_start_with_date
+            pattern: \[\d{4}-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])T
+      logs_enabled: true
+      process_config:
+        enabled: "true"
+      network_config:
+        enabled: true
+    datadog_additional_groups: 'docker'
+    # Drop-ins for /etc/datadog-agent/conf.d/<check_name>.d/conf.yaml
+    # See make targets for more details
+    datadog_checks:
+      disk:
+        init_config:
+        instances:
+          - use_mount: false
+            file_system_exclude:
+              - tmpfs
+              - shm
+            mount_point_exclude: '/var/lib/docker/(devicemapper|overlay).*'
+      docker:
+        init_config:
+        instances:
+          - url: "unix://var/run/docker.sock"
+            collect_events: true
+            collect_container_size: true
+            collect_images_stats: true
+            collect_image_size: true
+
+    # waiting on https://datameer.atlassian.net/browse/EUR-6130
+    #   spark:
+    #     init_config:
+    #       service: spark
+    #     instances:
+    #       - spark_url: http://ip-10-0-12-9.us-east-2.compute.internal:20888/proxy/application_1612199450456_0003/sparkUi
+    #         cluster_name: "{{ lookup('env', 'DD_CLUSTER_NAME') }}"
+    #         spark_cluster_mode: spark_driver_mode
+    # datadog_integration:
+    #   datadog-spark:
+    #     action: remove
+    #     version: 1.18.0
