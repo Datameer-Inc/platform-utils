@@ -41,12 +41,7 @@ run_playbook() {
   fi
 }
 
-pu_local_root_check
-config_file="${PU_LOCAL_ROOT}/datadog/.env"
-
-if [ -f "${config_file}" ]; then
-  info "Found datadog config '${config_file}'..."
-
+run_check() {
   install_ansible
 
   source_envs "${config_file}"
@@ -86,6 +81,18 @@ if [ -f "${config_file}" ]; then
   elif [ -f "${tools_book}" ]; then
     run_playbook "${tools_book}"
   fi
+}
+
+pu_local_root_check
+config_file="${PU_LOCAL_ROOT}/datadog/.env"
+
+
+if [ -f "${config_file}" ]; then
+  info "Found datadog config '${config_file}'..."
+  run_check
+elif command -v datadog-agent > /dev/null 2>&1; then
+  info "Found 'datadog-agent' command. Running check just in case..."
+  run_check
 else
-  info "Could not find datadog config '${config_file}'. Ignoring..."
+  info "Could find neither 'datadog-agent' nor datadog config file '${config_file}'. Ignoring..."
 fi
