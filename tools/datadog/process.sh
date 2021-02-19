@@ -44,8 +44,6 @@ run_playbook() {
 run_check() {
   install_ansible
 
-  source_envs "${config_file}"
-
   if [[ "${DD_AGENT_ENABLED:-}" != "true" ]]; then
     info "DD_AGENT_ENABLED=true not detected (neither as env or in config file). Disabling agent."
     DD_AGENT_ENABLED="false"
@@ -85,14 +83,19 @@ run_check() {
 
 pu_local_root_check
 config_file="${PU_LOCAL_ROOT}/datadog/.env"
+datadog_tag=$(get_instance_tag 'datadog')
 
 
 if [ -f "${config_file}" ]; then
   info "Found datadog config '${config_file}'..."
+  source_envs "${config_file}"
+  run_check
+elif [[ "${datadog_tag}" == "true" ]]; then
+  info "Found instance tag 'datadog = true'..."
   run_check
 elif command -v datadog-agent > /dev/null 2>&1; then
   info "Found 'datadog-agent' command. Running check just in case..."
   run_check
 else
-  info "Could find neither 'datadog-agent' nor datadog config file '${config_file}'. Ignoring..."
+  info "Could find neither 'datadog-agent' nor datadog config file '${config_file}', nor instance tag 'datadog:true'. Ignoring..."
 fi
