@@ -92,6 +92,7 @@ if [ -f "${config_file}" ]; then
   run_check
 elif [[ "${datadog_tag}" == "true" ]]; then
   info "Found instance tag 'datadog = true'..."
+  export DD_AGENT_ENABLED='true'
   run_check
 elif command -v datadog-agent > /dev/null 2>&1; then
   info "Found 'datadog-agent' command. Running check just in case..."
