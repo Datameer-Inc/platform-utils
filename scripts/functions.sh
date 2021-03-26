@@ -185,3 +185,45 @@ component_detection() {
   PLAYBOOK_COMPONENT='basic'
   PLAYBOOK_NAME='basic'
 }
+
+
+#######################################
+# Prompt User for an input
+# Globals:
+#   BASH_VERSINFO
+# Arguments:
+#   env             # env var to check for pre-set input value
+#   prompt text     # Text to display for prompt input
+#   default value   # Default value to take if no input given
+#######################################
+function prompt() {
+  if [ "${BASH_VERSINFO}" -lt 4 ]; then
+    echo "Bash Version >= 4 required (${BASH_VERSINFO} installed) for this feature"
+    exit 1
+  fi
+  local env=$1
+  local prompt=$2
+  local default_value=$3
+  local value
+
+  if [ -n "$prompt" ]; then
+    echo ">>> $prompt"
+  fi
+
+  # Use default value if empty
+  if [ -n "${!env}" ]; then
+    value=${!env};
+  else
+    value=${default_value}
+  fi
+  while true; do
+    echo -ne "$env"
+    read -e -i "$value" -p ": " $env
+    if [ -n "${!env}" ]; then
+      export $env
+      break
+    else
+      echo "<<< Value cannot be empty"
+    fi
+  done
+}
