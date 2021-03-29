@@ -4,13 +4,29 @@ set -euo pipefail
 
 currentScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]:-}" )" >/dev/null 2>&1 && pwd )"
 scriptsDir="${currentScriptDir}/scripts"
-source "${scriptDir}/functions.sh"
+source "${scriptsDir}/functions.sh"
 
 checkVars() {
-  prompt INSTALL_USER "What is your Linux Username? Leave blank to use the current user." "$(whoami)"
-  prompt INSTALL_USER_HOME "Where is your Linux Home Directory? Leave blank to use the current user's Home." "$(eval echo ~$INSTALL_USER)"
-  prompt AWS_ECR_CREDENTIALS "What are your AWS ECR Credentials? Input in the form: <AWS_ACCESS_KEY_ID>:<AWS_SECRET_ACCESS_KEY>"
-  prompt PLATFORM_ECR_IMAGE "What is the Platform ECR Image URI?"
+  if [ -z "${INSTALL_USER}" ]; then
+    prompt INSTALL_USER "What is your Linux Username? Leave blank to use the current user." "$(whoami)"
+  else
+    echo "Found INSTALL_USER = '$INSTALL_USER'"
+  fi
+  if [ -z "${INSTALL_USER_HOME}" ]; then
+    prompt INSTALL_USER_HOME "Where is your Linux Home Directory? Leave blank to use the current user's Home." "$(eval echo ~$INSTALL_USER)"
+  else
+    echo "Found INSTALL_USER_HOME = '$INSTALL_USER_HOME'"
+  fi
+  if [ -z "${PLATFORM_ECR_IMAGE}" ]; then
+    prompt PLATFORM_ECR_IMAGE "What is the Platform ECR Image URI?"
+  else
+    echo "Found PLATFORM_ECR_IMAGE = '$PLATFORM_ECR_IMAGE'"
+  fi
+  if [ -z "${AWS_ECR_CREDENTIALS}" ]; then
+    prompt AWS_ECR_CREDENTIALS "What are your AWS ECR Credentials? Input in the form: <AWS_ACCESS_KEY_ID>:<AWS_SECRET_ACCESS_KEY>"
+  else
+    echo "Found AWS_ECR_CREDENTIALS!"
+  fi
 }
 
 activateNetIpForward() {
@@ -95,30 +111,30 @@ setupPlatformScripts() {
     docker create --name tmp-platform-init ${PLATFORM_ECR_IMAGE} bash
     docker cp tmp-platform-init:/docker-compose $INSTALL_USER_HOME/dm-platform
     docker rm tmp-platform-init
-    chown -R $INSTALL_USER:$INSTALL_USER $INSTALL_USER_HOME/dm-platform
-    $INSTALL_USER_HOME/dm-platform || exit 1
+    chown -R $INSTALL_USER $INSTALL_USER_HOME/dm-platform
+    cd $INSTALL_USER_HOME/dm-platform || exit 1
     make
 }
 
 # Main
 
 echo "Hello from $(whoami) in $(pwd)"
-checkUserHome
 checkVars
-setBasicVars
 
 # Run as root to setup instance
 if [[ $EUID -eq 0 ]]; then
+    echo "Setting up Instance as root user..."
     echo "Preemptively adding docker group and giving $INSTALL_USER membership..."
     [ $(getent group docker) ] || groupadd -r docker
     usermod -aG docker $INSTALL_USER
-    echo "Setting up Instance as root..."
     activateNetIpForward
     dnsAutoConfigure
     provisioningSteps
 else
-  echo "Run me as root to setup this instance. Pulling Platform without setting up instance..."
+  echo "Run me as root to setup this instance."
+  echo "Pulling Platform without setting up instance..."
 fi
 
+echo "Setting up Platform..."
 dockerPullPlatform
 setupPlatformScripts

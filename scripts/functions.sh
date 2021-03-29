@@ -211,7 +211,7 @@ function prompt() {
   fi
 
   # Use default value if empty
-  if [ -n "${!env}" ]; then
+  if [ -n "${!env:-}" ]; then
     value=${!env};
   else
     value=${default_value}
