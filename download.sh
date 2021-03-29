@@ -69,6 +69,9 @@ function downloadAndExtract() {
     rm -f "${latestPath}"
     ln -sf "${installPath}" "${latestPath}"
   fi
+  echo "Installed to '${latestPath}'"
+  echo "To set up the instance, please run:"
+  echo "  cd ${latestPath} && sudo ./setup.sh"
 }
 
 # Main

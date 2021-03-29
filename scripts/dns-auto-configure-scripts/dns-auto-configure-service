@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# chkconfig: 2345 56 85
+# description: dns-auto-configure
+
+
+### BEGIN INIT INFO
+# Provides:          instance-setup
+# Required-Start:    $remote_fs $syslog $network
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Install dnsmasq and configure DNS according to VPC settings
+# Description:       Install dnsmasq and configure DNS according to VPC settings
+### END INIT INFO
+
+function setup {
+  # set up dns for vpc
+  mkdir -p /var/log/dns-auto-configure
+  chmod +x /usr/bin/dns-auto-configure
+  /usr/bin/dns-auto-configure 2>&1 | tee -a /var/log/dns-auto-configure/dns-auto-configure.log > /dev/console
+}
+
+case $1 in
+  'start' )
+    setup
+    ;;
+  'stop' )
+    ;;
+  'restart' )
+    setup
+    ;;
+  'force-reload' )
+    ;;
+  'status' )
+    echo "No real status possible but here is the current /etc/resolv.conf along with any running dnsmasq process..."
+    echo "###############################"
+    echo "Outputting /etc/resolv.conf...."
+    echo "###############################"
+    cat /etc/resolv.conf
+    echo "###############################"
+    echo "Outputting dnsmasq processes..."
+    echo "###############################"
+    ps auxww | grep [d]nsmasq
+    echo "###############################"
+    ;;
+  *)
+  echo "usage: `basename $0` {start|stop|status}"
+esac
+
+exit 0

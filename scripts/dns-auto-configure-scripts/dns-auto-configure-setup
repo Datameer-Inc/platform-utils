@@ -6,23 +6,13 @@ set -euxo pipefail
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]:-}" )" >/dev/null 2>&1 && pwd )"
 main_name='dns-auto-configure'
 
-download_from_s3() {
-    curl --connect-timeout 2 -q -f --retry-delay 2 --retry 5 \
-        -o "/tmp/${1}" \
-        "https://s3.amazonaws.com/examples.datameer.com/ec2-util-scripts/dns-auto-config-scripts/${1}"
-}
 prepare_file() {
     local file_name=$1 target=$2
-    if [ -f "${script_dir}/${file_name}" ]; then
-        cp "${script_dir}/${file_name}" "${target}"
-    elif [ -f "/tmp/${file_name}" ]; then
-        cp "/tmp/${file_name}" "${target}"
-    elif download_from_s3 "${file_name}"; then
-        cp "/tmp/${file_name}" "${target}"
-    else
+    if [ ! -f "${script_dir}/${file_name}" ]; then
         echo "File '${file_name}' neither in script directory, nor could it be downloaded. Failing..."
         return 1
     fi
+    cp "${script_dir}/${file_name}" "${target}"
     chmod +x "${target}"
 }
 if [[ $EUID -ne 0 ]]; then
