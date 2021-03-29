@@ -8,12 +8,12 @@ source "${scriptsDir}/functions.sh"
 
 checkVars() {
   if [ -z "${INSTALL_USER:-}" ]; then
-    prompt INSTALL_USER "What is your Linux Username? Leave blank to use the current user." "$(whoami)"
+    prompt INSTALL_USER "Which user will use the installation (e.g. ec2-user)? Leave blank to use the current user." "$(whoami)"
   else
     echo "Found INSTALL_USER = '$INSTALL_USER'"
   fi
   if [ -z "${INSTALL_USER_HOME:-}" ]; then
-    prompt INSTALL_USER_HOME "Where is your Linux Home Directory? Leave blank to use the current user's Home." "$(eval echo ~$INSTALL_USER)"
+    prompt INSTALL_USER_HOME "Where is your Linux Home Directory? Leave blank to use the current user's Home." "$(getent passwd "$INSTALL_USER" | cut -d: -f6)"
   else
     echo "Found INSTALL_USER_HOME = '$INSTALL_USER_HOME'"
   fi
