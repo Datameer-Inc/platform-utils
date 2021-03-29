@@ -154,7 +154,12 @@ if [[ $EUID -eq 0 ]]; then
     info "Setting up Instance as root user..."
     info "Preemptively adding docker group and giving $INSTALL_USER membership..."
     [ $(getent group docker) ] || groupadd -r docker
-    usermod -aG docker $INSTALL_USER
+    if id "${INSTALL_USER}" | grep -q "(docker)"; then
+        info "User '${INSTALL_USER}' has the docker group. Doing nothing..."
+    else
+        added_docker='true'
+        usermod -aG docker $INSTALL_USER
+    fi
     activateNetIpForward
     dnsAutoConfigure
     provisioningSteps
@@ -167,10 +172,8 @@ info "Setting up Platform..."
 dockerPullPlatform
 setupPlatformScripts
 info "Instance now provisioned. Checking docker group membership..."
-if id "${INSTALL_USER}" | grep -q "(docker)"; then
-  info "User '${INSTALL_USER}' has the docker group."
-else
-  info "WARNING: User '${INSTALL_USER}' does not have the docker group."
+if [[ "${added_docker:-}" == 'true' ]]; then
+  info "WARNING: User '${INSTALL_USER}' has just been added to the docker group."
   info "WARNING: Please logout and login as ${INSTALL_USER} before continuing with the steps below."
 fi
 echo
