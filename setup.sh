@@ -7,23 +7,23 @@ scriptsDir="${currentScriptDir}/scripts"
 source "${scriptsDir}/functions.sh"
 
 checkVars() {
-  if [ -z "${INSTALL_USER}" ]; then
+  if [ -z "${INSTALL_USER:-}" ]; then
     prompt INSTALL_USER "What is your Linux Username? Leave blank to use the current user." "$(whoami)"
   else
     echo "Found INSTALL_USER = '$INSTALL_USER'"
   fi
-  if [ -z "${INSTALL_USER_HOME}" ]; then
+  if [ -z "${INSTALL_USER_HOME:-}" ]; then
     prompt INSTALL_USER_HOME "Where is your Linux Home Directory? Leave blank to use the current user's Home." "$(eval echo ~$INSTALL_USER)"
   else
     echo "Found INSTALL_USER_HOME = '$INSTALL_USER_HOME'"
   fi
-  if [ -z "${PLATFORM_ECR_IMAGE}" ]; then
-    prompt PLATFORM_ECR_IMAGE "What is the Platform ECR Image URI?"
+  if [ -z "${PLATFORM_ECR_IMAGE:-}" ]; then
+    prompt PLATFORM_ECR_IMAGE "What is the Platform ECR Image URI?" ""
   else
     echo "Found PLATFORM_ECR_IMAGE = '$PLATFORM_ECR_IMAGE'"
   fi
-  if [ -z "${AWS_ECR_CREDENTIALS}" ]; then
-    prompt AWS_ECR_CREDENTIALS "What are your AWS ECR Credentials? Input in the form: <AWS_ACCESS_KEY_ID>:<AWS_SECRET_ACCESS_KEY>"
+  if [ -z "${AWS_ECR_CREDENTIALS:-}" ]; then
+    prompt AWS_ECR_CREDENTIALS "What are your AWS ECR Credentials? Input in the form: <AWS_ACCESS_KEY_ID>:<AWS_SECRET_ACCESS_KEY>" ""
   else
     echo "Found AWS_ECR_CREDENTIALS!"
   fi
@@ -109,10 +109,10 @@ dockerPullPlatform() {
 
 setupPlatformScripts() {
     docker create --name tmp-platform-init ${PLATFORM_ECR_IMAGE} bash
-    docker cp tmp-platform-init:/docker-compose $INSTALL_USER_HOME/dm-platform
+    docker cp tmp-platform-init:/docker-compose $INSTALL_USER_HOME/docker-compose
     docker rm tmp-platform-init
-    chown -R $INSTALL_USER $INSTALL_USER_HOME/dm-platform
-    cd $INSTALL_USER_HOME/dm-platform || exit 1
+    chown -R $INSTALL_USER $INSTALL_USER_HOME/docker-compose
+    cd $INSTALL_USER_HOME/docker-compose || exit 1
     make
 }
 
