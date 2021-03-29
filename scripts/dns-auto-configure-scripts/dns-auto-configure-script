@@ -1,0 +1,287 @@
+#!/bin/sh
+#
+# Set up DNS for EC2 instance in VPC with custom DNS and dhcp set options.
+# Taken from the '/usr/bin/setup-dns' on EMR AMI's.
+#
+set -x
+
+curl="curl -s --connect-timeout 2 -q -f --retry-delay 2 --retry 5"
+
+resolv_conf="/etc/resolv.conf"
+dhclient_conf="/etc/dhcp/dhclient.conf"
+localhost="127.0.0.1"
+curlEc2() {
+  local ec2MetaUrl='http://169.254.169.254/latest'
+  [ -n "${TOKEN:-}" ] || TOKEN=$(curl -X PUT "${ec2MetaUrl}/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+  $curl -H "X-aws-ec2-metadata-token: $TOKEN" $ec2MetaUrl/$1
+}
+
+restart_network="false"
+
+mac_address="$(curlEc2 meta-data/mac/ | tr '[:upper:]' '[:lower:]')"
+region="$(curlEc2 dynamic/instance-identity/document \
+          | jq -r .region)"
+
+get_search_domains()
+{
+    # find the line in $resolv_conf which starts with "search", then print that
+    # line without the initial "search ".
+    awk '$1 ~ /^search/ { sub(/^search /,""); print }' "$resolv_conf"
+}
+
+get_vpc_cidrs()
+{
+    # get all CIDR blocks in the VPC, since
+    # network/interfaces/macs/$mac_address/vpc-ipv4-cidr-block only gets the
+    # primary CIDR instead of the one the interface is actually in.
+    echo $(curlEc2 \
+         "meta-data/network/interfaces/macs/$mac_address/vpc-ipv4-cidr-blocks")
+}
+
+get_first_nameserver()
+{
+    # find the 1st line in $resolv_conf which starts with "nameserver" and
+    # print the 2nd item on that line (the nameserver address) only.
+    awk '$1 ~ /^nameserver/ { print $2; exit }' "$resolv_conf"
+}
+
+install_dnsmasq_if_necessary()
+{
+    if ! command -v dnsmasq > /dev/null; then
+        if command -v yum > /dev/null; then
+            yum install -y dnsmasq || return $?
+        elif command -v apt-get > /dev/null; then
+            apt-get install -y dnsmasq || return $?
+        else
+            echo "Package dnsmasq not installed, and neither apt-get nor yum can be found. Exiting..."
+            return 1
+        fi
+    fi
+}
+
+run_dnsmasq()
+{
+    install_dnsmasq_if_necessary || return $?
+
+    all_domains="$(get_search_domains)"
+
+    # find processes in the process list by command name "dnsmasq", print only
+    # the pid, do not print a header.
+    existing="$(ps ho pid -C dnsmasq)"
+    if [ "$?" = "0" ]; then
+        echo "Killing existing dnsmasq process:"
+        ps uww -C dnsmasq
+        kill "$existing"
+    fi
+
+    # build up dnsmasq arguments by looping over all domains and, for each,
+    # loop over all VPC CIDRs and add a synth-domain for that combination.
+    for d in $all_domains; do
+        for c in $(get_vpc_cidrs); do
+            syn_domains="$syn_domains --synth-domain=$d,$c,ip- "
+        done
+    done
+    dnsmasq --listen-address=127.0.0.1 $syn_domains
+    status="$?"
+
+    if [ "$status" = "0" ]; then
+        echo "started dnsmasq."
+    fi
+
+    first_nameserver="$(get_first_nameserver)"
+
+    if [ "$first_nameserver" != "$localhost" ]; then
+        prepend_domain_server "$localhost"
+    fi
+
+    return $status
+}
+
+get_hostname()
+{
+    hostname -f
+    return $?
+}
+
+check_reverse()
+{
+    fqdn="$1"
+
+    # expected host(1) output is like this:
+    # ip-1-2-3-4.ec2.internal has address 1.2.3.4
+    # possibly with some other lines of noise.
+    # it shouldn't be possible to be here without the forward look-up working,
+    # but we shouldn't assume.
+    ip_addr="$(host "$fqdn" \
+               | awk "\$0 ~ /^$fqdn has address/ { print \$4; exit }")"
+    if [ -z "$ip_addr" ]; then
+        return 1
+    fi
+
+    # expected host(1) output is like this:
+    # 4.3.2.1.in-addr.arpa domain name pointer ip-1-2-3-4.ec2.internal.
+    reverse="$(host "$ip_addr")"
+    if [ "$?" != "0" ]; then
+        return 2
+    fi
+
+    if [ "$(echo "$reverse" | cut -d' ' -f5)" != "$fqdn." ]; then
+        return 2
+    fi
+
+    return 0
+}
+
+show_dns_status()
+{
+    type="$1"
+    echo "------------ $type $resolv_conf ------------"
+    cat "$resolv_conf"
+    echo "------------ $type $dhclient_conf ------------"
+    cat "$dhclient_conf"
+    hostname="$(get_hostname)"
+    status="$?"
+    echo "'hostname -f' returns : $hostname"
+
+    if [ "$status" != "0" ]; then
+        return $status
+    fi
+
+    check_reverse "$hostname"
+    status="$?"
+    if [ "$status" = "0" ]; then
+        echo "Reverse DNS works and matches."
+    else
+        if [ "$status" = "1" ]; then
+            printf "Internal error: check_reverse called without forward "
+            echo "lookups working."
+        else
+            echo "Reverse DNS is incorrect."
+        fi
+    fi
+    return $status
+}
+
+restart_network_if_needed()
+{
+    if "$restart_network"; then
+        echo "Updating DNS settings."
+        service network restart
+        restart_network="false"
+    fi
+}
+
+append_line_to_dhclient_conf()
+{
+    echo "$1" | tee -a "$dhclient_conf"
+}
+
+prepend_domain()
+{
+    # sample line: prepend domain-name "ec2.internal  ";
+    if grep -Eq "^prepend domain-name \"$1 +\";$" "$dhclient_conf"; then
+        return
+    fi
+
+    append_line_to_dhclient_conf "prepend domain-name \"$1 \";"
+    restart_network="true"
+}
+
+prepend_domain_server()
+{
+    # sample line: prepend domain-name-servers 127.0.0.1;
+    if grep -Eq "^prepend domain-name-servers $1;$" "$dhclient_conf"; then
+        return
+    fi
+
+    append_line_to_dhclient_conf "prepend domain-name-servers $1;"
+    restart_network="true"
+}
+
+main()
+{
+    # for the "setup-dns rundnsmasq" syntax used by the instance controller to
+    # bypass all the checks and just kill and restart dnsmasq if DNS still
+    # doesn't work when the IC starts.
+    rundnsmasq="$1"
+
+    # wait for the network to come up before proceeding
+    if [ -e /usr/bin/nm-online ]; then
+        /usr/bin/nm-online
+    fi
+
+    # check whether the "search" field exists in $resolv_conf; if one defines
+    # a DHCP options set without a domain name, the search field will not be
+    # present, and DNS will be completely non-functional.
+    if ! grep -q ^search "$resolv_conf"; then
+        echo "Domain is missing, exiting."
+        return 1
+    fi
+
+    show_dns_status "BeforeSetup"
+
+    old_domains="$(get_search_domains)"
+
+    default_domain="ec2.internal"
+    if [ "$region" != "us-east-1" ]; then
+        default_domain="$region.compute.internal"
+    fi
+
+    in_vpc="false"
+    if curlEc2 "meta-data/network/interfaces/macs/$mac_address/" \
+        | grep -q vpc; then
+        in_vpc="true"
+    fi
+
+    if ! "$in_vpc"; then
+        # NON-VPC
+        if [ "$region" = "us-east-1" ]; then
+            found_default="false"
+            for i in $old_domains; do
+                if [ "$i" = "$default_domain" ]; then
+                    echo "$default_domain is already used in us-east-1."
+                    found_default="true"
+                    break
+                fi
+            done
+
+            if ! "$found_default"; then
+                echo "Making sure $default_domain is used in us-east-1."
+                prepend_domain "$default_domain"
+            fi
+        else
+            echo "Not in VPC, do nothing and exit."
+        fi
+    else
+        # VPC
+        if [ "$rundnsmasq" != "rundnsmasq" ]; then
+            resolving_host_name="$(get_hostname)"
+            hostname_works="$?"
+
+            # if get_hostname failed then we need to run dnsmasq.
+            if [ -z "$resolving_host_name" -o "$hostname_works" != "0" ]; then
+                rundnsmasq=rundnsmasq
+            else
+                check_reverse "$resolving_host_name"
+                # if check_reverse exited non-zero then we need to run dnsmasq.
+                if [ "$?" != "0" ]; then
+                    rundnsmasq=rundnsmasq
+                fi
+            fi
+        fi
+
+        if [ "$rundnsmasq" = "rundnsmasq" ]; then
+            run_dnsmasq || return $?
+        else
+            printf "Resolving hostname $resolving_host_name successfully, "
+            echo "do nothing and exit."
+        fi
+    fi
+
+    restart_network_if_needed
+    show_dns_status "AfterSetup"
+    return $?
+}
+
+main "$@"
+exit $?
